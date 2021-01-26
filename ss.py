@@ -41,6 +41,11 @@ keys = deque()
 images = deque()
 
 def image_thread(con, ad):
+    '''
+    thread to recieve images, seperate from amin recieving thread
+    when IMAGE is recieved in a message, recives the image that is sent\
+    then puts it in images deque for gui to use
+    '''
     while True:
         try:
             message = con.recv(512)
@@ -63,6 +68,10 @@ def image_thread(con, ad):
             pass
 
 def cthread(con, ad):
+    '''
+    recieves stuff from client
+    can add keys to the queue for gui usage
+    '''
     
 
     while True:
@@ -92,8 +101,30 @@ def cthread(con, ad):
             continue
 
 
-class thing(Tk):
+class Thing(Tk):
+    '''
+    main window
+    '''
     def __init__(self, server, *args, **kwargs):
+        '''
+        gui
+
+        layout:
+        
+        _______
+        |     |      _____________
+        |     |     |
+        |keys |     |
+        |     |     |
+        |     |     | image goes
+        _______     |     here
+                    |
+        ________    |
+        |      |    |
+        |      |    |_____________
+        |button|
+        ________
+        '''
         self.server = server
         super().__init__(*args, **kwargs)
 
@@ -152,6 +183,11 @@ class thing(Tk):
         self.canvas.grid(row=0, column=1, rowspan=3, sticky='NSEW')
 
     def send(self, event=None, message=None):
+        '''
+        sends the message to self.client
+        clears the entrybox
+        if client does not recieve, disconnect
+        '''
         if message:
             thing_to_send = message #python did stuff should not be printe
         else:
@@ -170,8 +206,12 @@ class thing(Tk):
         return True
     
     def add_image(self, image):
+        '''
+        inserts an image into the canvas label
+        image is the file path specified in the images
+        '''
         print('IMAGE')
-        self.img = Image.open(RELATIVE_IMAGE_FILE_NAME)
+        self.img = Image.open(image)
         self.img = self.img.resize((self.img.size[0] // 2,
                                     self.img.size[1] // 2))
         self.img = ImageTk.PhotoImage(self.img)
@@ -182,6 +222,9 @@ class thing(Tk):
         
 
     def log_key(self, key):
+        '''
+        puts one key into the listbox
+        '''
         replace = {
             '\\\\\\\\': '\\',
             'shift': 'shift_l',
@@ -194,6 +237,9 @@ class thing(Tk):
         
 
     def main(self):
+        '''
+        mainloop
+        '''
         while True:
             print('trying to accept')
             con, ad = server.accept() 
@@ -234,9 +280,9 @@ class thing(Tk):
                 if not self.client:
                     break
 
-            
-window = thing(server)
+if __name__ == '__main__':          
+    window = Thing(server)
 
-window.main()
+    window.main()
 
 
